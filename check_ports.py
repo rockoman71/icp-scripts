@@ -37,6 +37,7 @@ def expand_ranges(ranges, array_ports):
 
 def get_amount_ports(ports):
     ''' Print the amount of ports '''
+    #TODO since this func doesnt seem to be called, not added to txt file
     print 'The total of ports to verify is: ' + len(ports)
 
 
@@ -71,6 +72,8 @@ def main():
 
     PORTS_RANGES=['10248:10252', '30000:32767', '49152:49251']
 
+    TEXT_FILE = open("port-list.txt", "w")
+
     if cmdexists('ss'):
         ALL_PORTS=[]
         ALL_PORTS=expand_ranges(PORTS_RANGES, PORTS)
@@ -78,13 +81,15 @@ def main():
         # For every port in the main array of ports, check whether or not
         # a given port is available for usage.
         for port in ALL_PORTS:
-            print 'Checking port ' + str(port) + '...'
+            TEXT_FILE.write("Checking port %s ..." % str(port))
             if check_port(port)[0] == 0:
                 USED_PORTS.append(port)
 
-        print '***********************'
-        print 'Ports already in use: '
-        print USED_PORTS
+        TEXT_FILE.write("***********************")
+        TEXT_FILE.write("Ports already in use: ")
+        TEXT_FILE.write("%s" % str(USED_PORTS))
+
+    TEXT_FILE.close()
 
 if __name__ == "__main__":
     main()
