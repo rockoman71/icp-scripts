@@ -32,6 +32,8 @@
             If you use only ./icp-2103-single-node.sh, this will create
             a cluster with a internal IP assign. In this case you need need
             a ssh tunnel to access the ICP UI.
+            
+            Execute it as root :)
 '
 
 # Trap ctrl-c and call ctrl_c()
