@@ -15,18 +15,29 @@
     Contributors:
         * Rafael Sene <rpsene@br.ibm.com>
  
-    README: This script executes an offline installation of a single node 
-            of ICP 3.1.0. You need to set the ICP_FILE_URL accordingly to
-            ensure you can download/copy the offline package from the right
-            place. In order to use this script, you can run it without
-            any parameter or execute it setting the public ip as a parameter.
-
-            Example: ./icp-310-single-node.sh 1.2.3.4 (assuming 1.2.3.4
-            is a public IP), this will install ICP and use 1.2.3.4 as the
-            address where the ICP UI will be available.
+    README: 
+    
+            This script executes the installation of a single node of ICP 3.1.0.
+            If you want to install the Enterprise Edition, you need to set the 
+            ICP_FILE_URL accordingly to ensure you can download/copy 
+            the offline package from the right place. 
             
-            If you use only ./icp-310-single-node.sh, this will create
-            a cluster with a internal IP assign. In this case you need need
+            In order to use this script, you need to set the version of ICP you
+            want to install (ce, for community or ee, for enterprise only if 
+            you have access to it). 
+            
+                Example: ./icp-310-single-node.sh ce, will install ICP CE.
+
+            You can also set a public IP for the ICP UI, so it can be accessible
+            after the installation process. This is not required, but we strongly
+            recomend.
+
+                Example: ./icp-310-single-node.sh ce 1.2.3.4 (assuming 1.2.3.4 is
+                a public IP), this will install ICP ce and use 1.2.3.4 as the
+                address where the ICP UI will be available.
+            
+            If you use only ./icp-310-single-node.sh ce, this will create
+            a cluster with a internal IP assign. In this case you may need
             a ssh tunnel to access the ICP UI.
 
             Execute it as root :)
@@ -39,31 +50,26 @@ function ctrl_c() {
         echo "Bye!"
 }
 
-# ICP Variables
-
-ICP_FILE=ibm-cloud-private-ppc64le-3.1.0.tar.gz
-ICP_FILE_URL=<SET_THE_URL_HERE>/$ICP_FILE
-ICP_LOCATION=/opt/ibm-cp-app-mod-3.1.0
-INCEPTION=ibmcom/icp-inception-$(uname -m):3.1.0-ee
-
 # Get the main IP of the host
 HOSTNAME_IP=$(ip route get 1 | awk '{print $NF;exit}')
 HOSTNAME=$(hostname)
 
-if [ -z "$1" ]; then
-    EXTERNAL_IP=$HOSTNAME_IP  
-else
-    EXTERNAL_IP=$1
-fi
-
 # Move to the root directory
 cd /root || exit
+
+# ICP Installation directory
+ICP_LOCATION=/opt/ibm-cp-app-mod-3.1.0
+
+if [ -z "$2" ]; then
+    EXTERNAL_IP=$HOSTNAME_IP  
+else
+    EXTERNAL_IP=$2
+fi
 
 # Create SSH Key and overwrite any already created
 yes y | ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
 
 # Add this ssh-key in the authorized_keys
-> /root/.ssh/authorized_keys
 cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 # Updating, upgrading and installing some packages
@@ -93,6 +99,7 @@ fi
 # Configure network (/etc/hosts)
 # This line is required for a OpenStack or PowerVC environment
 sed -i -- 's/manage_etc_hosts: true/manage_etc_hosts: false/g' /etc/cloud/cloud.cfg
+
 sed -i '/127.0.1.1/s/^/#/g' /etc/hosts
 sed -i '/ip6-localhost/s/^/#/g' /etc/hosts
 echo -e "$HOSTNAME_IP $HOSTNAME" | tee -a /etc/hosts
@@ -100,14 +107,36 @@ echo -e "$HOSTNAME_IP $HOSTNAME" | tee -a /etc/hosts
 # Disable StrictHostKeyChecking ask
 sed -i -- 's/#   StrictHostKeyChecking ask/StrictHostKeyChecking no/g' /etc/ssh/ssh_config
 
+case $1 in
+     ce)
+            echo "Installing ICP 3.1.0 CE"
+            INCEPTION=ibmcom/icp-inception:3.1.0
+            docker pull $INCEPTION
+            ;;
+     ee)
+            echo "Installing ICP 3.1.0 EE"
+            # ICP Variables
+            ICP_FILE=ibm-cloud-private-ppc64le-3.1.0.tar.gz
+            ICP_FILE_URL=<SET_THE_URL_HERE>/$ICP_FILE
+            INCEPTION=ibmcom/icp-inception-$(uname -m):3.1.0-ee
+            wget $ICP_FILE_URL
+            tar xf $ICP_FILE -O | docker load
+            ;;
+     *)
+          echo "Hmm, seems you are missing the ICP version."
+          exit 0
+          ;;
+esac
+
 # Prepare environment for ICP installation
-wget $ICP_FILE_URL
-tar xf $ICP_FILE -O | docker load
 mkdir -p $ICP_LOCATION && cd $ICP_LOCATION || exit
 docker run -v "$(pwd)":/data -e LICENSE=accept $INCEPTION cp -r cluster /data
 cp /root/.ssh/id_rsa ./cluster/ssh_key
-mkdir -p ./cluster/images
-mv /root/$ICP_FILE ./cluster/images/
+
+if [ "$1" == "ee" ]; then
+    mkdir -p ./cluster/images
+    mv /root/$ICP_FILE ./cluster/images/
+fi
 
 cd ./cluster || exit
 
