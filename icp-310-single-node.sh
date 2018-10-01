@@ -76,7 +76,7 @@ cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -yq
 apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -yq
-apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -yq vim python git
+apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -yq vim python git socat
 
 # Installing Docker
 if [ ! -d docker_on_power ]; then
