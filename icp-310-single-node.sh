@@ -166,7 +166,7 @@ image-security-enforcement:
    clusterImagePolicy:
      - name: "docker.io/ibmcom/*"
        policy:
-" >> ./condig.yaml
+" >> ./config.yaml
 
 # Replace the entries in the config file to remove the comments of the external IPs
 sed -i -- "s/# cluster_lb_address: none/cluster_lb_address: $EXTERNAL_IP/g" ./config.yaml
