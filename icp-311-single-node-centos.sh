@@ -69,10 +69,12 @@ yes y | ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
 cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 
 # Updating, upgrading and installing some packages
-export DEBIAN_FRONTEND=noninteractive
-apt-get update -yq
-apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -yq
-apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -yq vim python git socat
+#export DEBIAN_FRONTEND=noninteractive
+#apt-get update -yq
+yum -y update
+#apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -yq
+#apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -yq vim python git socat
+yum -y install vim python git socat
 
 # Installing Docker
 if [ ! -d docker_on_power ]; then
